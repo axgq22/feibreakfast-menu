@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寶貝今天吃什麼？</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #4a4a4a;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2rem 2rem 3rem 2rem;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+            width: 85%;
+            max-width: 380px;
+            border: 4px solid #fff;
+            position: relative;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            background: #f5f5f5;
+            border-radius: 50px;
+            padding: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #999;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #ff8b94;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: #ff8b94;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            min-height: 1.5rem;
+        }
+
+        .game-console {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .display-box {
+            background-color: #fff0f5;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            border: 3px solid #ffccd5;
+            transition: all 0.3s ease;
+            padding: 10px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.03);
+        }
+
+        .food-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.1));
+        }
+
+        .food-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #555;
+            line-height: 1.3;
+            padding: 0 10px;
+        }
+
+        button.action-btn {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ff9a9e, #fad0c4);
+            border: 4px solid white;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(255, 105, 135, 0.4);
+            transition: all 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        button.action-btn:active {
+            transform: translateX(-50%) scale(0.9);
+            box-shadow: 0 2px 5px rgba(255, 105, 135, 0.4);
+        }
+
+        button.action-btn:disabled {
+            background: #ddd;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-hint {
+            position: absolute;
+            bottom: -55px;
+            left: 0;
+            right: 0;
+            font-size: 0.8rem;
+            color: #bbb;
+            pointer-events: none;
+        }
+
+        .menu-details {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+        }
+
+        .menu-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-item span {
+            margin-right: 8px;
+        }
+        
+        .toggle-menu {
+            color: #aaa;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 25px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchMode('breakfast')">早餐 ☀️</button>
+        <button class="tab-btn" onclick="switchMode('lunch')">午餐 🕛</button>
+    </div>
+
+    <h1 id="title">阿肥早餐吃什麼？</h1>
+    
+    <div class="game-console">
+        <div class="display-box" id="displayBox">
+            <div class="food-icon" id="foodIcon">❓</div>
+            <div class="food-name" id="foodName">點下面按鈕</div>
+        </div>
+
+        <button id="btn" class="action-btn" onclick="decideFood()">
+            🎲
+        </button>
+        <div class="btn-hint">點擊 GO 開始</div>
+    </div>
+
+    <div class="toggle-menu" onclick="toggleMenu()">偷看菜單</div>
+    <div class="menu-details" id="menuDetails">
+        </div>
+</div>
+
+<script>
+    // --- 菜單設定區 ---
+
+    const breakfastMenu = [
+        { name: "玉米起司蛋餅+鮮奶茶", icon: "🧀" },
+        { name: "蔬菜蛋餅", icon: "🥬" },
+        { name: "朝柴蘿蔔糕+蛋+紅茶", icon: "🍳" },
+        { name: "好事蛋沙拉+生菜+紅茶", icon: "🥗" },
+        { name: "好事三明治+蛋+紅茶", icon: "🥪" },
+        { name: "飯糰", icon: "🍙" },
+        { name: "蘿蔔糕", icon: "🥢" },
+        { name: "燒餅油條", icon: "🥖" },
+        { name: "饅頭+蛋", icon: "🥯" },
+        { name: "其他", icon: "✨" }
+    ];
+
+    // 這裡是你更新後的午餐菜單
+    const lunchMenu = [
+        { name: "自助餐", icon: "🍱" },
+        { name: "燒臘", icon: "🍖" },
+        { name: "全家", icon: "🏪" },
+        { name: "兔子", icon: "🐰" },
+        { name: "巧之味", icon: "🥟" },
+        { name: "福州乾拌麵", icon: "🍜" },
+        { name: "有煎餃子", icon: "🥘" },
+        { name: "其他", icon: "✨" },
+        { name: "超商隨便吃", icon: "🍙" }
+    ];
+
+    // --- 程式邏輯區 ---
+
+    let currentMenu = breakfastMenu;
+    let isRolling = false;
+    let mode = 'breakfast';
+
+    const displayBox = document.getElementById('displayBox');
+    const foodName = document.getElementById('foodName');
+    const foodIcon = document.getElementById('foodIcon');
+    const btn = document.getElementById('btn');
+    const menuDetails = document.getElementById('menuDetails');
+    const title = document.getElementById('title');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+
+    updateMenuList();
+
+    function switchMode(selectedMode) {
+        if (isRolling) return;
+
+        mode = selectedMode;
+        
+        tabBtns.forEach(btn => btn.classList.remove('active'));
+        if (mode === 'breakfast') {
+            tabBtns[0].classList.add('active');
+            currentMenu = breakfastMenu;
+            title.innerText = "阿肥早餐吃什麼？";
+            title.style.color = "#ff8b94";
+            displayBox.style.backgroundColor = "#fff0f5";
+            displayBox.style.borderColor = "#ffccd5";
+            btn.style.background = "linear-gradient(145deg, #ff9a9e, #fad0c4)";
+        } else {
+            tabBtns[1].classList.add('active');
+            currentMenu = lunchMenu;
+            title.innerText = "阿肥午餐吃什麼？";
+            title.style.color = "#ffb347";
+            displayBox.style.backgroundColor = "#fff8e1";
+            displayBox.style.borderColor = "#ffe082";
+            btn.style.background = "linear-gradient(145deg, #ffcc33, #ffb347)";
+        }
+
+        foodIcon.innerText = "❓";
+        foodName.innerText = "點下面按鈕";
+        btn.innerHTML = "🎲";
+        
+        updateMenuList();
+    }
+
+    function updateMenuList() {
+        menuDetails.innerHTML = currentMenu.map(item => 
+            `<div class="menu-item"><span>${item.icon}</span> ${item.name}</div>`
+        ).join('');
+    }
+
+    function decideFood() {
+        if (isRolling) return;
+        isRolling = true;
+        btn.disabled = true;
+        
+        if(mode === 'breakfast') {
+            displayBox.style.backgroundColor = "#fff0f5";
+        } else {
+            displayBox.style.backgroundColor = "#fff8e1";
+        }
+
+        let speed = 50; 
+        let totalTime = 0;
+        
+        const timer = setInterval(() => {
+            const randomItem = currentMenu[Math.floor(Math.random() * currentMenu.length)];
+            foodName.innerText = randomItem.name;
+            foodIcon.innerText = randomItem.icon;
+            
+            totalTime += speed;
+
+            if (totalTime > 2000) speed += 20; 
+
+            if (totalTime > 3000) {
+                clearInterval(timer);
+                endRoll();
+            }
+        }, speed);
+    }
+
+    function endRoll() {
+        const finalItem = currentMenu[Math.floor(Math.random() * currentMenu.length)];
+        foodName.innerText = finalItem.name;
+        foodIcon.innerText = finalItem.icon;
+        
+        displayBox.style.backgroundColor = "#d4edda"; 
+        displayBox.style.borderColor = "#c3e6cb";
+        displayBox.style.transform = "scale(1.02)";
+        setTimeout(() => displayBox.style.transform = "scale(1)", 200);
+
+        isRolling = false;
+        btn.disabled = false;
+        btn.innerHTML = "🔄";
+    }
+
+    function toggleMenu() {
+        if (menuDetails.style.display === "block") {
+            menuDetails.style.display = "none";
+        } else {
+            menuDetails.style.display = "block";
+        }
+    }
+</script>
+
+</body>
+</html>
